@@ -1,3 +1,4 @@
+import { AuthButtons } from '@/components/auth/auth-buttons';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -35,9 +36,7 @@ export default function Home() {
                 Contact
               </a>
             </nav>
-            <Button variant="outline" size="sm">
-              Get Started
-            </Button>
+            <AuthButtons />
           </div>
         </div>
       </header>
