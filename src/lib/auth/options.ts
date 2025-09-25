@@ -57,7 +57,9 @@ export const authOptions: NextAuthOptions = {
           throw new Error('Password is required.');
         }
 
+        console.log('Attempting authentication for:', email);
         const record = await authenticateUserWithPassword(email, password);
+        console.log('Authentication result:', record ? 'SUCCESS' : 'FAILED');
         if (!record) {
           return null;
         }

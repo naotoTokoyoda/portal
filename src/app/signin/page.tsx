@@ -31,12 +31,16 @@ export default function SignInPage() {
         redirect: false,
       });
 
-      if (result && typeof result === 'object' && 'error' in result) {
+      console.log('SignIn result:', result);
+
+      if (result?.error) {
         setError('Invalid email or password');
-      } else {
+      } else if (result?.ok || result === undefined) {
         // Sign in successful, redirect to home
         router.push('/');
         router.refresh();
+      } else {
+        setError('An unexpected error occurred');
       }
     } catch {
       setError('An error occurred during sign in');
