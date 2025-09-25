@@ -31,8 +31,6 @@ export default function SignInPage() {
         redirect: false,
       });
 
-      console.log('SignIn result:', result);
-
       if (result?.error) {
         setError('Invalid email or password');
       } else if (result?.ok || result === undefined) {

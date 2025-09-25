@@ -18,7 +18,7 @@
       "department": "test",
       "role": "user",
       "createdAt": "2025-09-25T02:48:49.842Z",
-      "updatedAt": "2025-09-25T02:48:49.842Z",
+      "updatedAt": "2025-09-25T04:15:05.843Z",
       "lastLoginAt": "2025-09-25T04:10:02.703Z",
       "passwordHash": "ea97f8527018a6d1b6812f24dc4c276f:e1327252a1b012da058234bb3f5047eb89a153a3b0ee62a81004a737632137f543930d181c74397b812d4871a4257bcbd8a78d36d5311f8e5480db52a86c4525"
     }
@@ -293,6 +293,36 @@
       "type": "login",
       "timestamp": "2025-09-25T04:14:15.082Z",
       "summary": "admin@example.com signed in."
+    },
+    {
+      "id": "c41de2fa-e8f5-4314-8872-a3f25a3991b0",
+      "userId": "7bdfa80e-d3e4-44a5-a9c3-2d90b74afe1c",
+      "actor": {
+        "id": "aabf733e-5282-43fd-8d71-50b874da1222",
+        "email": "admin@example.com",
+        "name": "Test Admin"
+      },
+      "type": "role_change",
+      "timestamp": "2025-09-25T04:15:02.982Z",
+      "summary": "admin@example.com changed test@test.com role to admin.",
+      "metadata": {
+        "role": "admin"
+      }
+    },
+    {
+      "id": "5968e1f3-289b-47ba-b6be-b563c37a850d",
+      "userId": "7bdfa80e-d3e4-44a5-a9c3-2d90b74afe1c",
+      "actor": {
+        "id": "aabf733e-5282-43fd-8d71-50b874da1222",
+        "email": "admin@example.com",
+        "name": "Test Admin"
+      },
+      "type": "role_change",
+      "timestamp": "2025-09-25T04:15:05.843Z",
+      "summary": "admin@example.com changed test@test.com role to user.",
+      "metadata": {
+        "role": "user"
+      }
     }
   ]
 }
