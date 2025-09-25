@@ -1,4 +1,118 @@
 {
-  "users": [],
-  "actions": []
+  "users": [
+    {
+      "id": "aabf733e-5282-43fd-8d71-50b874da1222",
+      "email": "admin@example.com",
+      "name": "Test Admin",
+      "department": "Engineering",
+      "role": "admin",
+      "createdAt": "2025-09-25T02:02:58.268Z",
+      "updatedAt": "2025-09-25T02:02:58.268Z",
+      "lastLoginAt": "2025-09-25T02:50:13.511Z",
+      "passwordHash": "2337177ebb6574c53e78a76317987612:ac389cedff02fc7916932775465b889ea9c7195bdba7ec8c0e3af8a33beb8254c4fa851ae78379872283b5df2d5e3baf7514d906b5447f71c044fa262ab337b9"
+    },
+    {
+      "id": "7bdfa80e-d3e4-44a5-a9c3-2d90b74afe1c",
+      "email": "test@test.com",
+      "name": "テスト",
+      "department": "test",
+      "role": "user",
+      "createdAt": "2025-09-25T02:48:49.842Z",
+      "updatedAt": "2025-09-25T02:48:49.842Z",
+      "lastLoginAt": "2025-09-25T02:49:28.158Z",
+      "passwordHash": "ea97f8527018a6d1b6812f24dc4c276f:e1327252a1b012da058234bb3f5047eb89a153a3b0ee62a81004a737632137f543930d181c74397b812d4871a4257bcbd8a78d36d5311f8e5480db52a86c4525"
+    }
+  ],
+  "actions": [
+    {
+      "id": "7e6893c5-b426-4811-88e7-991aa8e8ff05",
+      "userId": "aabf733e-5282-43fd-8d71-50b874da1222",
+      "actor": null,
+      "type": "created",
+      "timestamp": "2025-09-25T02:02:58.344Z",
+      "summary": "system created user admin@example.com",
+      "metadata": {
+        "user": {
+          "id": "aabf733e-5282-43fd-8d71-50b874da1222",
+          "email": "admin@example.com",
+          "name": "Test Admin",
+          "department": "Engineering",
+          "role": "admin",
+          "createdAt": "2025-09-25T02:02:58.268Z",
+          "updatedAt": "2025-09-25T02:02:58.268Z"
+        }
+      }
+    },
+    {
+      "id": "2ef4b022-ee6c-490c-9df5-040fe033836e",
+      "userId": "aabf733e-5282-43fd-8d71-50b874da1222",
+      "actor": {
+        "id": "aabf733e-5282-43fd-8d71-50b874da1222",
+        "email": "admin@example.com",
+        "name": "Test Admin"
+      },
+      "type": "login",
+      "timestamp": "2025-09-25T02:34:55.446Z",
+      "summary": "admin@example.com signed in."
+    },
+    {
+      "id": "9068e2af-7b86-4b8b-9061-76d23377e4ac",
+      "userId": "aabf733e-5282-43fd-8d71-50b874da1222",
+      "actor": {
+        "id": "aabf733e-5282-43fd-8d71-50b874da1222",
+        "email": "admin@example.com",
+        "name": "Test Admin"
+      },
+      "type": "login",
+      "timestamp": "2025-09-25T02:37:04.514Z",
+      "summary": "admin@example.com signed in."
+    },
+    {
+      "id": "86762447-7dd9-49bf-883a-793b3ada60b9",
+      "userId": "7bdfa80e-d3e4-44a5-a9c3-2d90b74afe1c",
+      "actor": {
+        "id": "aabf733e-5282-43fd-8d71-50b874da1222",
+        "email": "admin@example.com",
+        "name": "Test Admin"
+      },
+      "type": "created",
+      "timestamp": "2025-09-25T02:48:49.905Z",
+      "summary": "admin@example.com created user test@test.com",
+      "metadata": {
+        "user": {
+          "id": "7bdfa80e-d3e4-44a5-a9c3-2d90b74afe1c",
+          "email": "test@test.com",
+          "name": "テスト",
+          "department": "test",
+          "role": "user",
+          "createdAt": "2025-09-25T02:48:49.842Z",
+          "updatedAt": "2025-09-25T02:48:49.842Z"
+        }
+      }
+    },
+    {
+      "id": "3b7adb5f-3290-4a2b-8619-5f95bf229e44",
+      "userId": "7bdfa80e-d3e4-44a5-a9c3-2d90b74afe1c",
+      "actor": {
+        "id": "7bdfa80e-d3e4-44a5-a9c3-2d90b74afe1c",
+        "email": "test@test.com",
+        "name": "テスト"
+      },
+      "type": "login",
+      "timestamp": "2025-09-25T02:49:28.158Z",
+      "summary": "test@test.com signed in."
+    },
+    {
+      "id": "5b37544c-e18e-4c16-8905-22519ff3a1d5",
+      "userId": "aabf733e-5282-43fd-8d71-50b874da1222",
+      "actor": {
+        "id": "aabf733e-5282-43fd-8d71-50b874da1222",
+        "email": "admin@example.com",
+        "name": "Test Admin"
+      },
+      "type": "login",
+      "timestamp": "2025-09-25T02:50:13.511Z",
+      "summary": "admin@example.com signed in."
+    }
+  ]
 }

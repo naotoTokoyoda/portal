@@ -28,7 +28,7 @@ export function AuthButtons() {
   }
 
   return (
-    <Button variant="outline" size="sm" onClick={() => signIn('credentials')}>
+    <Button variant="outline" size="sm" onClick={() => window.location.href = '/signin'}>
       Sign in
     </Button>
   );

@@ -7,8 +7,11 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth/options';
 
-export default function Home() {
+export default async function Home() {
+  const session = await getServerSession(authOptions);
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -23,6 +26,14 @@ export default function Home() {
               >
                 Home
               </a>
+              {session?.user?.role === 'admin' && (
+                <a
+                  href="/users"
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Admin
+                </a>
+              )}
               <a
                 href="#"
                 className="text-muted-foreground hover:text-foreground transition-colors"
@@ -51,12 +62,31 @@ export default function Home() {
             A modern Next.js application built with TypeScript, Tailwind CSS,
             and best practices. Ready to scale and perform.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg">Get Started</Button>
-            <Button variant="outline" size="lg">
-              Learn More
-            </Button>
-          </div>
+          
+          {session?.user ? (
+            <div className="space-y-4">
+              <div className="bg-muted/50 rounded-lg p-6 max-w-md mx-auto">
+                <h3 className="text-lg font-semibold mb-2">
+                  Welcome back, {session.user.name || session.user.email}!
+                </h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Role: {session.user.role} | Department: {session.user.department || 'N/A'}
+                </p>
+                {session.user.role === 'admin' && (
+                  <a href="/users">
+                    <Button size="lg">Go to Admin Panel</Button>
+                  </a>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button size="lg">Get Started</Button>
+              <Button variant="outline" size="lg">
+                Learn More
+              </Button>
+            </div>
+          )}
         </div>
       </section>
 
