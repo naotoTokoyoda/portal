@@ -1,6 +1,6 @@
 'use client';
 
-import { signIn, signOut, useSession } from 'next-auth/react';
+import { signOut, useSession } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 
 export function AuthButtons() {
@@ -28,7 +28,11 @@ export function AuthButtons() {
   }
 
   return (
-    <Button variant="outline" size="sm" onClick={() => window.location.href = '/signin'}>
+    <Button
+      variant="outline"
+      size="sm"
+      onClick={() => (window.location.href = '/signin')}
+    >
       Sign in
     </Button>
   );

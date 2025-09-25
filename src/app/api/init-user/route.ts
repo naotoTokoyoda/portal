@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { createUser } from '@/lib/persistence/users';
 
-export async function POST(request: NextRequest) {
+export async function POST() {
   try {
     // Create a test admin user
     const testUser = await createUser(

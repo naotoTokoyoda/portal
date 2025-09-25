@@ -73,15 +73,16 @@ async function readJson(request: NextRequest) {
 
 export async function GET(
   _request: NextRequest,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await context.params;
   const session = await getServerSession(authOptions);
-  if (!canViewUser(session, context.params.id)) {
+  if (!canViewUser(session, id)) {
     const status = session?.user ? 403 : 401;
     return NextResponse.json({ error: 'Unauthorized' }, { status });
   }
 
-  const user = await getUserById(context.params.id);
+  const user = await getUserById(id);
   if (!user) {
     return NextResponse.json({ error: 'User not found' }, { status: 404 });
   }
@@ -92,8 +93,9 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await context.params;
   const session = await getServerSession(authOptions);
   let actor: AdminActor;
   try {
@@ -149,7 +151,7 @@ export async function PATCH(
   };
 
   try {
-    const user = await updateUser(context.params.id, updates, actor);
+    const user = await updateUser(id, updates, actor);
     const actions = await listActionsForUser(user.id);
     return NextResponse.json({ user, actions });
   } catch (error) {
@@ -162,8 +164,9 @@ export async function PATCH(
 
 export async function DELETE(
   _request: NextRequest,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await context.params;
   const session = await getServerSession(authOptions);
   let actor: AdminActor;
   try {
@@ -174,7 +177,7 @@ export async function DELETE(
   }
 
   try {
-    await deleteUser(context.params.id, actor);
+    await deleteUser(id, actor);
     return NextResponse.json({ ok: true });
   } catch (error) {
     return NextResponse.json(

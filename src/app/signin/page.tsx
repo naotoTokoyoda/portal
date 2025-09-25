@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { signIn, getSession } from 'next-auth/react';
+import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import {
@@ -31,14 +31,14 @@ export default function SignInPage() {
         redirect: false,
       });
 
-      if (result?.error) {
+      if (result && typeof result === 'object' && 'error' in result) {
         setError('Invalid email or password');
       } else {
         // Sign in successful, redirect to home
         router.push('/');
         router.refresh();
       }
-    } catch (error) {
+    } catch {
       setError('An error occurred during sign in');
     } finally {
       setIsLoading(false);
@@ -71,7 +71,10 @@ export default function SignInPage() {
               />
             </div>
             <div>
-              <label htmlFor="password" className="block text-sm font-medium mb-1">
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium mb-1"
+              >
                 Password
               </label>
               <input
@@ -87,11 +90,7 @@ export default function SignInPage() {
             {error && (
               <div className="text-red-500 text-sm text-center">{error}</div>
             )}
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={isLoading}
-            >
+            <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? 'Signing in...' : 'Sign In'}
             </Button>
           </form>

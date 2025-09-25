@@ -62,7 +62,7 @@ export default async function Home() {
             A modern Next.js application built with TypeScript, Tailwind CSS,
             and best practices. Ready to scale and perform.
           </p>
-          
+
           {session?.user ? (
             <div className="space-y-4">
               <div className="bg-muted/50 rounded-lg p-6 max-w-md mx-auto">
@@ -70,7 +70,8 @@ export default async function Home() {
                   Welcome back, {session.user.name || session.user.email}!
                 </h3>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Role: {session.user.role} | Department: {session.user.department || 'N/A'}
+                  Role: {session.user.role} | Department:{' '}
+                  {session.user.department || 'N/A'}
                 </p>
                 {session.user.role === 'admin' && (
                   <a href="/users">
