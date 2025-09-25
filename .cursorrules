@@ -1,0 +1,177 @@
+# 日報アプリ開発ルール
+
+本ドキュメントは Zenn「Next.js 基本原則」をベースに、当プロジェクトの環境と方針を踏まえて整理したものです。
+Cursor の AI はコード生成や提案の際に、以下のルールを優先して遵守します。
+
+## 🔹 【重要】Git Workflow 強制ルール
+
+**Cursorで作業を行う際は、以下のワークフローを必ず守ること：**
+
+### 必須手順：
+1. **作業開始前**: 必ず `develop` ブランチから新しいブランチを作成
+2. **作業完了後**: 必ず `develop` ブランチにマージ  
+3. **mainブランチへの直接マージは絶対禁止**
+
+### 作業フロー：
+```bash
+# 1. developブランチに移動・更新
+git checkout develop
+git pull origin develop
+
+# 2. 新しいブランチ作成
+git checkout -b <type>/<description>
+
+# 3. 作業完了後 - developにマージ
+git checkout develop
+git merge <作業ブランチ>
+git push origin develop
+
+# 4. 動作確認後 - ブランチ削除
+git branch -d <作業ブランチ>
+```
+
+## 🔹 ブランチ命名ルール
+
+- ブランチ名は **必ず英語** で記述すること（日本語・ローマ字混在禁止）
+- 単語の区切りはハイフン（-）を使用する
+- 命名フォーマット: `<type>/<brief-description>`
+
+例：
+- feature/add-daily-report-form
+- bugfix/fix-total-time-bug
+- refactor/rename-task-component
+
+## 🔹 ブランチの種類とprefix
+
+| タイプ       | 用途                   | 接頭辞       |
+|--------------|------------------------|--------------|
+| 機能追加     | 新しい機能の追加       | `feature/`   |
+| バグ修正     | バグ修正               | `bugfix/`    |
+| リファクタ   | 機能変更なしの改善     | `refactor/`  |
+| 緊急修正     | 本番環境の緊急対応     | `hotfix/`    |
+| ドキュメント | ドキュメントの修正等   | `docs/`      |
+| テスト       | テスト関連の追加・修正 | `test/`      |
+
+## 🔹 ブランチ作成のタイミング
+
+- `develop` ブランチから必要に応じて `feature/` ブランチなどを切る
+- 作業開始時に必ずブランチを作成し、作業内容と対応する命名を意識すること
+
+## 🔹 Next.js 基本原則（Zennガイド準拠＋プロジェクト向けカスタム）
+
+### 1. 基本構成と思想
+- Next.js 15 + App Router を採用
+- デフォルトで Server Components を使用
+- Client Components は必要最小限（状態管理・副作用・ブラウザイベントが必須な場合）
+- UI とロジックを分離
+  - UI（プレゼンテーショナルコンポーネント）は /components
+  - ロジックは hooks/lib/server 側に分離
+
+### 2. データ取得の原則
+- 原則として サーバー側でデータ取得
+  - Server Components
+  - Route Handlers (app/api/**/route.ts)
+  - Server Actions
+- クライアント側での fetch は最小限（フォーム送信や即時UI更新など）
+- キャッシュ戦略を明示
+  - cache: 'force-cache' / no-store / revalidate を適切に設定
+  - 不必要な no-store の乱用は禁止
+- 同一リクエストはメモ化される（Request Memoization）
+  - 同一レンダーパスでの fetch() の重複を防ぐ
+  - メモリキャッシュはレンダリング中のみ保持
+
+### 3. 型安全とバリデーション
+- tsconfig.json は "strict": true
+- API パラメータ・環境変数・フォームデータは Zod でバリデーション
+- フロント・サーバー間で型を共有（/types ディレクトリを利用）
+
+### 4. ファイル構造と命名規則
+- /app：ルーティングとUIの骨格
+  - page.tsx / layout.tsx / loading.tsx / error.tsx / route.ts
+- /components：UI コンポーネント（できるだけ Server Components）
+- /hooks：クライアント専用カスタムフック
+- /lib：純関数・サーバーユーティリティ
+- /types：型定義
+
+命名規則：
+- ファイル名：ケバブケース
+- コンポーネント・型：パスカルケース
+- 変数・関数：キャメルケース
+
+### 5. スタイリングとUI
+- Tailwind CSS を使用
+- 複雑な class 条件分岐は cn 関数などで整理
+- UI コンポーネントは再利用可能な設計を目指す
+- デザイン変更の影響を抑えるため、スタイルのロジック化を意識
+
+### 6. SEO とメタデータ
+- 各ページで export const metadata を設定
+- OG 画像は opengraph-image.tsx などで生成可能
+
+### 7. エラー処理とフォールバック
+- サーバー側は try/catch と共通エラーハンドリング関数を用意
+- UI 側は error.tsx で適切なフォールバックを実装
+- ログは lib/logger.ts などに集約
+
+### 8. API 設計
+- Route Handlers は単機能・薄いレイヤーを徹底
+- 入力データは Zod で検証
+- レスポンスは Response.json を使い、構造を明確に
+- Server Actions はフォーム送信やミューテーション処理に使用
+- CSRF や権限チェックを必須実装
+
+### 9. テストと品質保証
+- PR 前に npm run lint / npm run type-check を必ず実行
+- lib のビジネスロジックを優先的にユニットテスト
+- UI テストは主要な分岐に焦点を当てる
+- .env.example を常に最新の状態に保つ
+
+### 10. コミットとレビュー
+- コミットメッセージは Conventional Commits に準拠
+- AI 生成コードは必ず本ドキュメントと照らしてレビュー
+- 差分は最小単位で適用（過剰な修正を避ける）
+
+## 🔹 コミット・プッシュルール
+
+### 変更量の制限
+- **1ブランチにつき追記500行以内に収める**
+- **1回のコミット/プッシュも500行以内を維持**
+- 大きな機能は複数の小さなブランチ・コミットに分割する
+- レビュー効率を考慮し、理解しやすい単位でブランチ・コミットを作成する
+
+### 分割の指針
+- 機能単位でブランチ・コミットを分ける（例：API実装 → フロントエンド → テスト）
+- ファイル追加とロジック変更を分ける
+- リファクタリングと新機能追加を分ける
+- 500行を超える場合は、論理的な区切りで複数ブランチ・コミットに分割
+
+### ブランチ・コミット例
+```bash
+# 悪い例（1855行の大きなブランチ・コミット）
+git commit -m "feat: Implement complete aggregation system"
+
+# 良い例（機能を複数ブランチに分割）
+# ブランチ1: feature/add-aggregation-api (300行)
+git commit -m "feat: Add aggregation API endpoints"
+
+# ブランチ2: feature/add-aggregation-detail-ui (250行) 
+git commit -m "feat: Add aggregation detail component"
+
+# ブランチ3: feature/add-toast-notification (200行)
+git commit -m "feat: Add toast notification system"
+```
+
+## 🔹 その他ルール
+
+- 意図しないファイルの変更を含めないように注意
+- 1ブランチ1タスク（複数機能やバグの混在を避ける）
+- 作業完了後は必ずdevelopブランチでの動作確認を行う
+- ブランチ名は英語で記述（例：feature/add-report-filter）
+- Cursor に登録するルールにはこのドキュメントの抜粋を反映する
+
+---
+
+## 参照元
+- Zenn: Next.js 基本原則
+
+**これらのルールを遵守して、安全で効率的な開発を進めること。**
