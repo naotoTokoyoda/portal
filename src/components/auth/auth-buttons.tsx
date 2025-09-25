@@ -28,7 +28,7 @@ export function AuthButtons() {
   }
 
   return (
-    <Button variant="outline" size="sm" onClick={() => signIn()}>
+    <Button variant="outline" size="sm" onClick={() => signIn('credentials')}>
       Sign in
     </Button>
   );

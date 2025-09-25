@@ -64,16 +64,9 @@ declare module 'next-auth/react' {
   };
 }
 
-declare module 'next-auth/providers/google' {
-  const GoogleProvider: (
+declare module 'next-auth/providers/credentials' {
+  const CredentialsProvider: (
     options: Record<string, unknown>
   ) => Record<string, unknown>;
-  export default GoogleProvider;
-}
-
-declare module 'next-auth/providers/azure-ad' {
-  const AzureADProvider: (
-    options: Record<string, unknown>
-  ) => Record<string, unknown>;
-  export default AzureADProvider;
+  export default CredentialsProvider;
 }

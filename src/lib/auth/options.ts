@@ -1,143 +1,108 @@
 import type { NextAuthOptions } from 'next-auth';
-import GoogleProvider from 'next-auth/providers/google';
-import AzureADProvider from 'next-auth/providers/azure-ad';
-import { normalizeIdentityProfile } from '@/lib/auth/identity';
+import CredentialsProvider from 'next-auth/providers/credentials';
 import {
-  resolveDepartmentFromIdentity,
-  resolveRoleFromDepartment,
-} from '@/lib/auth/config';
-import {
-  getUserByEmail,
-  upsertUserFromIdentity,
+  authenticateUserWithPassword,
+  getUserById,
+  type UserRecord,
 } from '@/lib/persistence/users';
 
 type MutableToken = {
   [key: string]: unknown;
-  email?: string;
   userId?: string;
+  email?: string;
   role?: string;
   department?: string;
 };
 
 type AuthUser = {
+  id?: string | null;
   email?: string | null;
-  name?: string | null;
-  persistedUserId?: string;
-  role?: string;
-  department?: string;
+  role?: string | null;
+  department?: string | null;
 };
 
-const providers = [];
-
-if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
-  providers.push(
-    GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      authorization: {
-        params: {
-          prompt: 'select_account',
-          access_type: 'offline',
-          response_type: 'code',
-        },
-      },
-    })
-  );
-} else {
-  console.warn('Google Workspace provider is not configured.');
-}
-
-if (
-  process.env.AZURE_AD_CLIENT_ID &&
-  process.env.AZURE_AD_CLIENT_SECRET &&
-  process.env.AZURE_AD_TENANT_ID
-) {
-  providers.push(
-    AzureADProvider({
-      clientId: process.env.AZURE_AD_CLIENT_ID,
-      clientSecret: process.env.AZURE_AD_CLIENT_SECRET,
-      tenantId: process.env.AZURE_AD_TENANT_ID,
-      authorization: {
-        params: {
-          scope: 'openid profile email offline_access User.Read',
-        },
-      },
-    })
-  );
-} else {
-  console.warn('Microsoft 365 provider is not configured.');
+function toAuthUser(record: UserRecord) {
+  return {
+    id: record.id,
+    email: record.email,
+    name: record.name,
+    role: record.role,
+    department: record.department,
+  };
 }
 
 export const authOptions: NextAuthOptions = {
-  providers,
+  providers: [
+    CredentialsProvider({
+      name: 'Email & Password',
+      credentials: {
+        email: {
+          label: 'Email',
+          type: 'email',
+          placeholder: 'you@example.com',
+        },
+        password: { label: 'Password', type: 'password' },
+      },
+      async authorize(credentials: Record<string, unknown> | undefined) {
+        const email =
+          typeof credentials?.email === 'string' ? credentials.email : null;
+        const password =
+          typeof credentials?.password === 'string'
+            ? credentials.password
+            : null;
+        if (!email) {
+          throw new Error('Email is required.');
+        }
+        if (!password) {
+          throw new Error('Password is required.');
+        }
+
+        const record = await authenticateUserWithPassword(email, password);
+        if (!record) {
+          return null;
+        }
+
+        return toAuthUser(record);
+      },
+    }),
+  ],
   session: {
     strategy: 'jwt',
   },
   callbacks: {
-    async jwt({ token, account, profile, user }) {
+    async jwt({ token, user }) {
       const authToken = token as MutableToken;
-      const authAccount = (account ?? undefined) as
-        | { provider?: string }
-        | undefined;
-      const authProfile = profile as Record<string, unknown> | undefined;
-      const authUser = (user ?? undefined) as AuthUser | undefined;
 
-      if (authAccount?.provider) {
-        try {
-          const normalized = normalizeIdentityProfile(
-            authAccount.provider,
-            authProfile,
-            authUser
-          );
-          const persistedUserId = authUser?.persistedUserId;
-          if (persistedUserId) {
-            authToken.userId = persistedUserId;
-            authToken.role =
-              (authUser?.role as MutableToken['role']) ?? authToken.role;
-            authToken.department =
-              (authUser?.department as MutableToken['department']) ??
-              authToken.department;
-            authToken.email = normalized.email;
-            return authToken;
-          }
-          const department = resolveDepartmentFromIdentity(
-            normalized.email,
-            normalized.department
-          );
-          const role = resolveRoleFromDepartment(department, normalized.groups);
-          const record =
-            (await getUserByEmail(normalized.email)) ??
-            (await upsertUserFromIdentity({
-              email: normalized.email,
-              name: normalized.name,
-              department,
-              role,
-              provider: authAccount.provider,
-              metadata: normalized.raw ?? undefined,
-            }));
-          authToken.userId = record.id;
-          authToken.role = record.role;
-          authToken.department = record.department;
-          authToken.email = record.email;
-          return authToken;
-        } catch (error) {
-          console.error('Failed to synchronise identity profile', error);
-          throw error;
-        }
+      if (user) {
+        const authUser = user as AuthUser;
+        authToken.userId =
+          typeof authUser.id === 'string' ? authUser.id : undefined;
+        authToken.email =
+          typeof authUser.email === 'string' ? authUser.email : undefined;
+        authToken.role =
+          authUser.role === 'admin' || authUser.role === 'user'
+            ? authUser.role
+            : undefined;
+        authToken.department =
+          typeof authUser.department === 'string'
+            ? authUser.department
+            : undefined;
+        return authToken;
       }
 
-      const emailCandidate =
-        (typeof authUser?.email === 'string' && authUser.email) ||
-        (typeof authToken.email === 'string' && authToken.email) ||
-        null;
-
-      if (emailCandidate) {
-        const persisted = await getUserByEmail(emailCandidate);
-        if (persisted) {
-          authToken.userId = persisted.id;
-          authToken.role = persisted.role;
-          authToken.department = persisted.department;
-          authToken.email = persisted.email;
+      const userId =
+        typeof authToken.userId === 'string' ? authToken.userId : null;
+      if (userId) {
+        const latest = await getUserById(userId);
+        if (latest) {
+          authToken.email = latest.email;
+          authToken.role = latest.role;
+          authToken.department = latest.department;
+        } else {
+          delete authToken.userId;
+          delete authToken.role;
+          delete authToken.department;
+          delete authToken.email;
         }
       }
 
@@ -145,70 +110,33 @@ export const authOptions: NextAuthOptions = {
     },
     async session({ session, token }) {
       const authSession = session as {
-        user?: { id?: string; role?: string; department?: string };
+        user?: {
+          id?: string;
+          email?: string | null;
+          role?: string;
+          department?: string;
+        };
       };
       const authToken = token as MutableToken;
 
       if (authSession.user) {
         const tokenUserId =
-          typeof authToken.userId === 'string' ? authToken.userId : '';
-        authSession.user.id = tokenUserId;
-        const nextRole =
-          authToken.role === 'admin'
-            ? 'admin'
-            : authToken.role === 'user'
-              ? 'user'
-              : 'user';
-        authSession.user.role = nextRole;
+          typeof authToken.userId === 'string' ? authToken.userId : undefined;
+        if (tokenUserId) {
+          authSession.user.id = tokenUserId;
+        }
+        if (typeof authToken.email === 'string') {
+          authSession.user.email = authToken.email;
+        }
+        if (typeof authToken.role === 'string') {
+          authSession.user.role = authToken.role as 'admin' | 'user';
+        }
         if (typeof authToken.department === 'string') {
           authSession.user.department = authToken.department;
         }
       }
+
       return authSession;
-    },
-    async signIn({ account, profile, user }) {
-      const authAccount = (account ?? undefined) as
-        | { provider?: string }
-        | undefined;
-      const authProfile = profile as Record<string, unknown> | undefined;
-      const authUser = (user ?? undefined) as AuthUser | undefined;
-
-      if (!authUser?.email) {
-        return false;
-      }
-
-      if (authAccount?.provider) {
-        try {
-          const normalized = normalizeIdentityProfile(
-            authAccount.provider,
-            authProfile,
-            authUser
-          );
-          const department = resolveDepartmentFromIdentity(
-            normalized.email,
-            normalized.department
-          );
-          const role = resolveRoleFromDepartment(department, normalized.groups);
-          const record = await upsertUserFromIdentity({
-            email: normalized.email,
-            name: normalized.name,
-            department,
-            role,
-            provider: authAccount.provider,
-            metadata: normalized.raw ?? undefined,
-          });
-          if (authUser) {
-            authUser.persistedUserId = record.id;
-            authUser.role = record.role;
-            authUser.department = record.department;
-          }
-        } catch (error) {
-          console.error('Failed to persist user from provider', error);
-          return false;
-        }
-      }
-
-      return true;
     },
   },
 };

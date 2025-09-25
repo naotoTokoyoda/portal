@@ -27,8 +27,8 @@ export default async function UsersPage() {
           <p className="text-sm text-muted-foreground">{adminEmail}</p>
           <h1 className="text-3xl font-semibold">User Administration</h1>
           <p className="text-muted-foreground">
-            Manage Google Workspace and Microsoft 365 identities, toggle roles,
-            and review a full audit log of recent actions.
+            Manage local accounts, set access credentials, toggle roles, and
+            review a full audit log of recent actions.
           </p>
         </header>
         <UsersClient

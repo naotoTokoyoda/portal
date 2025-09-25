@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState, useTransition } from 'react';
+import { useEffect, useMemo, useState, useTransition } from 'react';
 import { Button } from '@/components/ui/button';
 import type {
   UserActionRecord,
@@ -19,6 +19,8 @@ type FormState = {
   email: string;
   department: string;
   role: UserRole;
+  password: string;
+  confirmPassword: string;
 };
 
 type ToastState = {
@@ -54,6 +56,8 @@ const defaultFormState: FormState = {
   email: '',
   department: '',
   role: 'user',
+  password: '',
+  confirmPassword: '',
 };
 
 export function UsersClient({
@@ -71,6 +75,17 @@ export function UsersClient({
   const [toast, setToast] = useState<ToastState>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const [passwordInputs, setPasswordInputs] = useState({
+    password: '',
+    confirmPassword: '',
+  });
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+
+  useEffect(() => {
+    setPasswordInputs({ password: '', confirmPassword: '' });
+    setPasswordError(null);
+  }, [selectedUserId]);
 
   const actionsByUser = useMemo(() => {
     const grouped = new Map<string, UserActionRecord[]>();
@@ -98,16 +113,103 @@ export function UsersClient({
     setFormState((prev) => ({ ...prev, [field]: value }));
   };
 
+  const handlePasswordInputChange = (
+    field: 'password' | 'confirmPassword',
+    value: string
+  ) => {
+    setPasswordInputs((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleResetPassword = async (
+    event: React.FormEvent<HTMLFormElement>
+  ) => {
+    event.preventDefault();
+    setPasswordError(null);
+    setToast(null);
+
+    if (!selectedUser) {
+      return;
+    }
+
+    if (!passwordInputs.password || passwordInputs.password.length < 8) {
+      setPasswordError('Password must be at least 8 characters long.');
+      return;
+    }
+
+    if (passwordInputs.password !== passwordInputs.confirmPassword) {
+      setPasswordError('Passwords do not match.');
+      return;
+    }
+
+    setIsUpdatingPassword(true);
+    try {
+      const response = await fetch(`/api/users/${selectedUser.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: passwordInputs.password }),
+      });
+      const payload = await response.json();
+      if (!response.ok) {
+        setPasswordError(payload.error ?? 'Failed to update password.');
+        return;
+      }
+
+      const updatedUser = payload.user as UserRecord;
+      const userActions = payload.actions as UserActionRecord[];
+      setUsers((prev) =>
+        sortUsers(
+          prev.map((candidate) =>
+            candidate.id === updatedUser.id ? updatedUser : candidate
+          )
+        )
+      );
+      setActions((prev) =>
+        sortActions([
+          ...prev.filter((action) => action.userId !== updatedUser.id),
+          ...userActions,
+        ])
+      );
+      setToast({
+        type: 'success',
+        message: `Updated password for ${updatedUser.email}.`,
+      });
+      setPasswordInputs({ password: '', confirmPassword: '' });
+    } catch (error) {
+      setPasswordError(
+        error instanceof Error ? error.message : 'Failed to update password.'
+      );
+    } finally {
+      setIsUpdatingPassword(false);
+    }
+  };
+
   const handleCreateUser = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setFormError(null);
     setToast(null);
+
+    if (!formState.password || formState.password.length < 8) {
+      setFormError('Password must be at least 8 characters long.');
+      return;
+    }
+
+    if (formState.password !== formState.confirmPassword) {
+      setFormError('Passwords do not match.');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const response = await fetch('/api/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formState),
+        body: JSON.stringify({
+          name: formState.name,
+          email: formState.email,
+          department: formState.department,
+          role: formState.role,
+          password: formState.password,
+        }),
       });
       const payload = await response.json();
       if (!response.ok) {
@@ -120,7 +222,7 @@ export function UsersClient({
       setUsers((prev) => sortUsers([createdUser, ...prev]));
       setActions((prev) => sortActions([...prev, ...createdActions]));
       setSelectedUserId(createdUser.id);
-      setFormState(defaultFormState);
+      setFormState({ ...defaultFormState });
       setToast({
         type: 'success',
         message: `Created user ${createdUser.email}`,
@@ -288,6 +390,32 @@ export function UsersClient({
               <option value="admin">Admin</option>
             </select>
           </label>
+          <label className="flex flex-col gap-1 text-sm">
+            <span className="font-medium">Password</span>
+            <input
+              type="password"
+              className="rounded-md border px-3 py-2 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              value={formState.password}
+              onChange={(event) =>
+                handleFormChange('password', event.target.value)
+              }
+              required
+              minLength={8}
+            />
+          </label>
+          <label className="flex flex-col gap-1 text-sm">
+            <span className="font-medium">Confirm password</span>
+            <input
+              type="password"
+              className="rounded-md border px-3 py-2 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              value={formState.confirmPassword}
+              onChange={(event) =>
+                handleFormChange('confirmPassword', event.target.value)
+              }
+              required
+              minLength={8}
+            />
+          </label>
           {formError ? (
             <p className="text-sm text-destructive md:col-span-2">
               {formError}
@@ -318,8 +446,8 @@ export function UsersClient({
             <div>
               <h2 className="text-xl font-semibold">Users</h2>
               <p className="text-sm text-muted-foreground">
-                Toggle roles between general user and administrator for any
-                identity.
+                Toggle roles between general users and administrators for any
+                account.
               </p>
             </div>
           </header>
@@ -433,6 +561,55 @@ export function UsersClient({
                     {selectedUser.department}
                   </p>
                 </div>
+                <form
+                  className="space-y-3 rounded-md border px-3 py-3"
+                  onSubmit={handleResetPassword}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <h4 className="text-sm font-semibold">Set new password</h4>
+                    <span className="text-xs text-muted-foreground">
+                      Minimum 8 characters
+                    </span>
+                  </div>
+                  <label className="flex flex-col gap-1 text-sm">
+                    <span className="font-medium">Password</span>
+                    <input
+                      type="password"
+                      autoComplete="new-password"
+                      className="rounded-md border px-3 py-2 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                      value={passwordInputs.password}
+                      onChange={(event) =>
+                        handlePasswordInputChange(
+                          'password',
+                          event.target.value
+                        )
+                      }
+                      minLength={8}
+                    />
+                  </label>
+                  <label className="flex flex-col gap-1 text-sm">
+                    <span className="font-medium">Confirm password</span>
+                    <input
+                      type="password"
+                      autoComplete="new-password"
+                      className="rounded-md border px-3 py-2 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                      value={passwordInputs.confirmPassword}
+                      onChange={(event) =>
+                        handlePasswordInputChange(
+                          'confirmPassword',
+                          event.target.value
+                        )
+                      }
+                      minLength={8}
+                    />
+                  </label>
+                  {passwordError ? (
+                    <p className="text-sm text-destructive">{passwordError}</p>
+                  ) : null}
+                  <Button type="submit" size="sm" disabled={isUpdatingPassword}>
+                    {isUpdatingPassword ? 'Saving…' : 'Save new password'}
+                  </Button>
+                </form>
                 <ul className="space-y-3">
                   {selectedHistory.length === 0 ? (
                     <li className="text-sm text-muted-foreground">

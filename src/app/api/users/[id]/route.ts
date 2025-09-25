@@ -123,11 +123,29 @@ export async function PATCH(
     );
   }
 
+  let password: string | undefined;
+  if (payload.password !== undefined) {
+    if (typeof payload.password !== 'string') {
+      return NextResponse.json(
+        { error: 'Password must be a string.' },
+        { status: 400 }
+      );
+    }
+    if (payload.password.length < 8) {
+      return NextResponse.json(
+        { error: 'Password must be at least 8 characters long.' },
+        { status: 400 }
+      );
+    }
+    password = payload.password;
+  }
+
   const updates: UpdateUserInput = {
     name: typeof payload.name === 'string' ? payload.name : undefined,
     department:
       typeof payload.department === 'string' ? payload.department : undefined,
     role,
+    password,
   };
 
   try {
