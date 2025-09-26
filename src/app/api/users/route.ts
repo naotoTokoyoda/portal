@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/options';
+import { logAccess, logAudit } from '@/lib/logging';
 import {
   createUser,
   listActions,
@@ -62,10 +63,26 @@ async function readJson(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   const session = await getServerSession(authOptions);
+  const clientIp =
+    request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
+    request.ip ??
+    null;
+  const userAgent = request.headers.get('user-agent');
   try {
     assertAdmin(session);
   } catch (error) {
     const status = (error as Error & { status?: number }).status ?? 401;
+    await logAccess({
+      actorId: session?.user?.id,
+      actorRole: session?.user?.role,
+      actorDepartment: session?.user?.department,
+      actorIp: clientIp,
+      method: request.method,
+      resource: '/api/users',
+      statusCode: status,
+      userAgent,
+      metadata: { outcome: 'access-denied' },
+    });
     return NextResponse.json({ error: (error as Error).message }, { status });
   }
 
@@ -73,20 +90,58 @@ export async function GET(request: NextRequest) {
     request.nextUrl.searchParams.get('includeHistory') === '1';
   const users = await listUsers();
   if (!includeHistory) {
+    await logAccess({
+      actorId: session?.user?.id,
+      actorRole: session?.user?.role,
+      actorDepartment: session?.user?.department,
+      actorIp: clientIp,
+      method: request.method,
+      resource: '/api/users',
+      statusCode: 200,
+      userAgent,
+      metadata: { includeHistory: false },
+    });
     return NextResponse.json({ users });
   }
 
   const actions = await listActions();
+  await logAccess({
+    actorId: session?.user?.id,
+    actorRole: session?.user?.role,
+    actorDepartment: session?.user?.department,
+    actorIp: clientIp,
+    method: request.method,
+    resource: '/api/users',
+    statusCode: 200,
+    userAgent,
+    metadata: { includeHistory: true },
+  });
   return NextResponse.json({ users, actions });
 }
 
 export async function POST(request: NextRequest) {
   const session = await getServerSession(authOptions);
+  const clientIp =
+    request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
+    request.ip ??
+    null;
+  const userAgent = request.headers.get('user-agent');
   let actor: AdminActor;
   try {
     actor = assertAdmin(session);
   } catch (error) {
     const status = (error as Error & { status?: number }).status ?? 401;
+    await logAccess({
+      actorId: session?.user?.id,
+      actorRole: session?.user?.role,
+      actorDepartment: session?.user?.department,
+      actorIp: clientIp,
+      method: request.method,
+      resource: '/api/users',
+      statusCode: status,
+      userAgent,
+      metadata: { outcome: 'access-denied' },
+    });
     return NextResponse.json({ error: (error as Error).message }, { status });
   }
 
@@ -94,6 +149,17 @@ export async function POST(request: NextRequest) {
   try {
     payload = await readJson(request);
   } catch (error) {
+    await logAccess({
+      actorId: actor.id,
+      actorRole: session?.user?.role,
+      actorDepartment: session?.user?.department,
+      actorIp: clientIp,
+      method: request.method,
+      resource: '/api/users',
+      statusCode: 400,
+      userAgent,
+      metadata: { outcome: 'invalid-json' },
+    });
     return NextResponse.json(
       { error: (error as Error).message },
       { status: 400 }
@@ -101,14 +167,47 @@ export async function POST(request: NextRequest) {
   }
 
   if (!payload.email || typeof payload.email !== 'string') {
+    await logAccess({
+      actorId: actor.id,
+      actorRole: session?.user?.role,
+      actorDepartment: session?.user?.department,
+      actorIp: clientIp,
+      method: request.method,
+      resource: '/api/users',
+      statusCode: 400,
+      userAgent,
+      metadata: { outcome: 'missing-email' },
+    });
     return NextResponse.json({ error: 'Email is required.' }, { status: 400 });
   }
 
   if (!payload.name || typeof payload.name !== 'string') {
+    await logAccess({
+      actorId: actor.id,
+      actorRole: session?.user?.role,
+      actorDepartment: session?.user?.department,
+      actorIp: clientIp,
+      method: request.method,
+      resource: '/api/users',
+      statusCode: 400,
+      userAgent,
+      metadata: { outcome: 'missing-name' },
+    });
     return NextResponse.json({ error: 'Name is required.' }, { status: 400 });
   }
 
   if (!payload.department || typeof payload.department !== 'string') {
+    await logAccess({
+      actorId: actor.id,
+      actorRole: session?.user?.role,
+      actorDepartment: session?.user?.department,
+      actorIp: clientIp,
+      method: request.method,
+      resource: '/api/users',
+      statusCode: 400,
+      userAgent,
+      metadata: { outcome: 'missing-department' },
+    });
     return NextResponse.json(
       { error: 'Department is required.' },
       { status: 400 }
@@ -116,6 +215,17 @@ export async function POST(request: NextRequest) {
   }
 
   if (!payload.password || typeof payload.password !== 'string') {
+    await logAccess({
+      actorId: actor.id,
+      actorRole: session?.user?.role,
+      actorDepartment: session?.user?.department,
+      actorIp: clientIp,
+      method: request.method,
+      resource: '/api/users',
+      statusCode: 400,
+      userAgent,
+      metadata: { outcome: 'missing-password' },
+    });
     return NextResponse.json(
       { error: 'Password is required.' },
       { status: 400 }
@@ -123,6 +233,17 @@ export async function POST(request: NextRequest) {
   }
 
   if (payload.password.length < 8) {
+    await logAccess({
+      actorId: actor.id,
+      actorRole: session?.user?.role,
+      actorDepartment: session?.user?.department,
+      actorIp: clientIp,
+      method: request.method,
+      resource: '/api/users',
+      statusCode: 400,
+      userAgent,
+      metadata: { outcome: 'password-too-short' },
+    });
     return NextResponse.json(
       { error: 'Password must be at least 8 characters long.' },
       { status: 400 }
@@ -133,6 +254,17 @@ export async function POST(request: NextRequest) {
   try {
     role = parseRole(payload.role);
   } catch (error) {
+    await logAccess({
+      actorId: actor.id,
+      actorRole: session?.user?.role,
+      actorDepartment: session?.user?.department,
+      actorIp: clientIp,
+      method: request.method,
+      resource: '/api/users',
+      statusCode: 400,
+      userAgent,
+      metadata: { outcome: 'invalid-role' },
+    });
     return NextResponse.json(
       { error: (error as Error).message },
       { status: 400 }
@@ -152,8 +284,44 @@ export async function POST(request: NextRequest) {
     );
 
     const actions = await listActionsForUser(user.id);
+
+    await logAccess({
+      actorId: actor.id,
+      actorRole: session?.user?.role,
+      actorDepartment: session?.user?.department,
+      actorIp: clientIp,
+      method: request.method,
+      resource: '/api/users',
+      statusCode: 201,
+      userAgent,
+      metadata: { createdUserId: user.id },
+    });
+
+    await logAudit({
+      action: 'user.create',
+      actorId: actor.id,
+      actorRole: session?.user?.role,
+      targetId: user.id,
+      description: `Created user ${user.email}`,
+      metadata: {
+        department: user.department,
+        accessHistoryEntries: actions.length,
+      },
+    });
+
     return NextResponse.json({ user, actions }, { status: 201 });
   } catch (error) {
+    await logAccess({
+      actorId: actor.id,
+      actorRole: session?.user?.role,
+      actorDepartment: session?.user?.department,
+      actorIp: clientIp,
+      method: request.method,
+      resource: '/api/users',
+      statusCode: 400,
+      userAgent,
+      metadata: { outcome: 'create-user-error' },
+    });
     return NextResponse.json(
       { error: (error as Error).message },
       { status: 400 }
