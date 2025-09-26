@@ -1,4 +1,5 @@
 import { AuthButtons } from '@/components/auth/auth-buttons';
+import { SearchPanel } from '@/components/search/search-panel';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -28,7 +29,7 @@ export default async function Home() {
               </a>
               {session?.user?.role === 'admin' && (
                 <a
-                  href="/users"
+                  href="/dashboard"
                   className="text-muted-foreground hover:text-foreground transition-colors"
                 >
                   Admin
@@ -74,7 +75,7 @@ export default async function Home() {
                   {session.user.department || 'N/A'}
                 </p>
                 {session.user.role === 'admin' && (
-                  <a href="/users">
+                  <a href="/dashboard">
                     <Button size="lg">Go to Admin Panel</Button>
                   </a>
                 )}
@@ -88,6 +89,18 @@ export default async function Home() {
               </Button>
             </div>
           )}
+        </div>
+      </section>
+
+      {/* Search Section */}
+      <section className="py-16 px-4 bg-muted/40">
+        <div className="container mx-auto max-w-4xl space-y-4">
+          <h3 className="text-3xl font-bold">Unified Knowledge Search</h3>
+          <p className="text-muted-foreground">
+            Look up announcements, department-specific documents, and curated
+            links in one place.
+          </p>
+          <SearchPanel />
         </div>
       </section>
 

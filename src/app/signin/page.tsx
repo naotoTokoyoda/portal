@@ -2,6 +2,13 @@
 
 import { useState } from 'react';
 import { signIn } from 'next-auth/react';
+
+type CredentialsSignInResult = {
+  error?: string;
+  ok?: boolean;
+  status?: number;
+  url?: string | null;
+};
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import {
@@ -25,11 +32,11 @@ export default function SignInPage() {
     setIsLoading(true);
 
     try {
-      const result = await signIn('credentials', {
+      const result = (await signIn('credentials', {
         email,
         password,
         redirect: false,
-      });
+      })) as CredentialsSignInResult | undefined;
 
       if (result?.error) {
         setError('Invalid email or password');
