@@ -8,7 +8,7 @@
       "role": "admin",
       "createdAt": "2025-09-25T02:02:58.268Z",
       "updatedAt": "2025-09-25T02:02:58.268Z",
-      "lastLoginAt": "2025-09-25T04:14:15.081Z",
+      "lastLoginAt": "2025-09-26T00:13:41.794Z",
       "passwordHash": "2337177ebb6574c53e78a76317987612:ac389cedff02fc7916932775465b889ea9c7195bdba7ec8c0e3af8a33beb8254c4fa851ae78379872283b5df2d5e3baf7514d906b5447f71c044fa262ab337b9"
     },
     {
@@ -18,7 +18,7 @@
       "department": "test",
       "role": "user",
       "createdAt": "2025-09-25T02:48:49.842Z",
-      "updatedAt": "2025-09-25T04:15:05.843Z",
+      "updatedAt": "2025-09-26T02:41:07.910Z",
       "lastLoginAt": "2025-09-25T04:10:02.703Z",
       "passwordHash": "ea97f8527018a6d1b6812f24dc4c276f:e1327252a1b012da058234bb3f5047eb89a153a3b0ee62a81004a737632137f543930d181c74397b812d4871a4257bcbd8a78d36d5311f8e5480db52a86c4525"
     }
@@ -319,6 +319,48 @@
       },
       "type": "role_change",
       "timestamp": "2025-09-25T04:15:05.843Z",
+      "summary": "admin@example.com changed test@test.com role to user.",
+      "metadata": {
+        "role": "user"
+      }
+    },
+    {
+      "id": "495e7e33-a6e4-4542-bf9a-88722a25c261",
+      "userId": "aabf733e-5282-43fd-8d71-50b874da1222",
+      "actor": {
+        "id": "aabf733e-5282-43fd-8d71-50b874da1222",
+        "email": "admin@example.com",
+        "name": "Test Admin"
+      },
+      "type": "login",
+      "timestamp": "2025-09-26T00:13:41.795Z",
+      "summary": "admin@example.com signed in."
+    },
+    {
+      "id": "789ebb9b-b63f-49f7-b996-eb24b8ab0512",
+      "userId": "7bdfa80e-d3e4-44a5-a9c3-2d90b74afe1c",
+      "actor": {
+        "id": "aabf733e-5282-43fd-8d71-50b874da1222",
+        "email": "admin@example.com",
+        "name": "Test Admin"
+      },
+      "type": "role_change",
+      "timestamp": "2025-09-26T02:41:00.367Z",
+      "summary": "admin@example.com changed test@test.com role to admin.",
+      "metadata": {
+        "role": "admin"
+      }
+    },
+    {
+      "id": "c4497971-4bfa-4b1f-8741-86852296593b",
+      "userId": "7bdfa80e-d3e4-44a5-a9c3-2d90b74afe1c",
+      "actor": {
+        "id": "aabf733e-5282-43fd-8d71-50b874da1222",
+        "email": "admin@example.com",
+        "name": "Test Admin"
+      },
+      "type": "role_change",
+      "timestamp": "2025-09-26T02:41:07.910Z",
       "summary": "admin@example.com changed test@test.com role to user.",
       "metadata": {
         "role": "user"
